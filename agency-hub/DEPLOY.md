@@ -52,16 +52,29 @@ pm2 save
 
 Editar `/etc/httpd/conf.d/drosagencia.conf` (ou o virtual host apropriado do dominio), DENTRO do `<VirtualHost *:443>` de `drosagencia.com.br`, ANTES das regras do `/hub` pra evitar shadowing:
 
-```apache
-ProxyPass /hub2/api http://127.0.0.1:3007/api
-ProxyPassReverse /hub2/api http://127.0.0.1:3007/api
-ProxyPass /hub2 http://127.0.0.1:3007
-ProxyPassReverse /hub2 http://127.0.0.1:3007
+O cPanel usa userdata includes. Criar 2 arquivos identicos (HTTPS + HTTP):
+
+```bash
+cat > /etc/apache2/conf.d/userdata/ssl/2_4/dros/drosagencia.com.br/hub2-proxy.conf <<'EOF'
+ProxyPreserveHost On
+RedirectMatch 301 ^/hub2$ /hub2/
+ProxyPass /hub2/ http://127.0.0.1:3007/
+ProxyPassReverse /hub2/ http://127.0.0.1:3007/
+EOF
+cat > /etc/apache2/conf.d/userdata/std/2_4/dros/drosagencia.com.br/hub2-proxy.conf <<'EOF'
+ProxyPreserveHost On
+RedirectMatch 301 ^/hub2$ /hub2/
+ProxyPass /hub2/ http://127.0.0.1:3007/
+ProxyPassReverse /hub2/ http://127.0.0.1:3007/
+EOF
 ```
+
+O `RedirectMatch 301 ^/hub2$ /hub2/` eh critico: se um usuario acessa `/hub2` sem barra final, o Apache proxy nao captura (ProxyPass eh `/hub2/`) e cai no documento root do dominio (WordPress do site principal → erro de DB). O redirect forca a barra e ai o proxy pega.
 
 Testar e recarregar:
 ```bash
-apachectl configtest && systemctl reload httpd
+/scripts/ensure_vhost_includes --all-users
+apachectl configtest && apachectl graceful
 ```
 
 ## Comandos por tipo de mudanca
