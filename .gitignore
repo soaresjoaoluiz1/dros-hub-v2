@@ -1,0 +1,23 @@
+node_modules/
+.env
+*.log
+
+# Build artifacts do banco (dados sensiveis + dev local)
+agency-hub/server/data/*.db
+agency-hub/server/data/*.sqlite
+agency-hub/server/data/*.db-journal
+agency-hub/server/data/*.db-wal
+agency-hub/server/data/*.db-shm
+
+# node_modules dentro do agency-hub
+agency-hub/node_modules/
+
+# NAO ignorar dist/ — vai commitado pro deploy (frontend buildado local)
+# agency-hub/dist/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
