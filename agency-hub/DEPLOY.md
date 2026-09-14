@@ -5,10 +5,10 @@
 - **VPS:** vps-5269157.3store.com.br (HostGator, root SSH)
 - **OS:** CentOS 7 / TuxCare ELS
 - **Node:** 16.x via nvm (`source ~/.nvm/nvm.sh && nvm use 16`)
-- **Web server:** Apache 2.4 (cPanel) — proxy reverso pra porta 3005
+- **Web server:** Apache 2.4 (cPanel) — proxy reverso pra porta 3007
 - **Path:** `/root/hub2` (NAO `/opt/platform` — esse eh do v1)
 - **Processo PM2:** `dros-hub-v2` (v1 continua com nome `dros-hub`)
-- **Porta API:** 3005 (v1 = 3003, CRM = 3002, Core = 3004)
+- **Porta API:** 3007 (v1 = 3003, CRM = 3002, Core = 3004; 3005-3006 e 3010-3011 ocupadas por outros PM2)
 - **Base path frontend:** `/hub2/`
 - **URL:** https://drosagencia.com.br/hub2
 
@@ -53,10 +53,10 @@ pm2 save
 Editar `/etc/httpd/conf.d/drosagencia.conf` (ou o virtual host apropriado do dominio), DENTRO do `<VirtualHost *:443>` de `drosagencia.com.br`, ANTES das regras do `/hub` pra evitar shadowing:
 
 ```apache
-ProxyPass /hub2/api http://127.0.0.1:3005/api
-ProxyPassReverse /hub2/api http://127.0.0.1:3005/api
-ProxyPass /hub2 http://127.0.0.1:3005
-ProxyPassReverse /hub2 http://127.0.0.1:3005
+ProxyPass /hub2/api http://127.0.0.1:3007/api
+ProxyPassReverse /hub2/api http://127.0.0.1:3007/api
+ProxyPass /hub2 http://127.0.0.1:3007
+ProxyPassReverse /hub2 http://127.0.0.1:3007
 ```
 
 Testar e recarregar:

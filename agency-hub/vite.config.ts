@@ -6,6 +6,6 @@ export default defineConfig({
   base: '/hub2/',
   server: {
     port: 5179,
-    proxy: { '/api': { target: 'http://localhost:3005', changeOrigin: true } },
+    proxy: { '/api': { target: 'http://localhost:3007', changeOrigin: true } },
   },
 })

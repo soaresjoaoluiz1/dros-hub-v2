@@ -31,7 +31,7 @@ cd dros-hub-v2
 cp .env.example .env    # editar JWT_SECRET e outras chaves
 cd agency-hub
 npm ci
-npm run dev             # inicia backend porta 3005 + frontend porta 5179
+npm run dev             # inicia backend porta 3007 + frontend porta 5179
 ```
 
 Acessar: http://localhost:5179/hub2/
@@ -44,7 +44,7 @@ Ver [agency-hub/DEPLOY.md](agency-hub/DEPLOY.md).
 
 - Banco separado (`/root/hub2/agency-hub/server/data/hub.db` vs `/opt/platform/agency-hub/server/data/hub.db`)
 - PM2 process separado (`dros-hub-v2` vs `dros-hub`)
-- Porta separada (3005 vs 3003)
+- Porta separada (3007 vs 3003)
 - JWT_SECRET diferente (sessoes nao se misturam)
 - Path Apache separado (`/hub2` vs `/hub`)
 

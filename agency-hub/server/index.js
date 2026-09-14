@@ -32,7 +32,7 @@ const app = express()
 app.use(cors())
 app.use(express.json({ limit: '5mb' }))
 
-const PORT = 3005
+const PORT = 3007
 
 // Routes
 app.use('/api/auth', authRoutes)

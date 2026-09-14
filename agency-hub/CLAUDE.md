@@ -5,7 +5,7 @@
 Este eh o **Dros Hub v2** — um mirror isolado do Hub v1 (`https://drosagencia.com.br/hub`) rodando em paralelo em `https://drosagencia.com.br/hub2`. Objetivo: validar novo IA (sidebar Tasty-style, Team Hub interno por cliente, CS/NPS/Melhoria Continua) sem tocar no v1 em producao.
 
 - **v1 fica intacto** em porta 3003, banco `/opt/platform/agency-hub/server/data/hub.db`, PM2 `dros-hub`
-- **v2 roda em paralelo** em porta 3005, banco `/root/hub2/agency-hub/server/data/hub.db`, PM2 `dros-hub-v2`
+- **v2 roda em paralelo** em porta 3007, banco `/root/hub2/agency-hub/server/data/hub.db`, PM2 `dros-hub-v2`
 - **Banco 100% isolado** apos seed inicial (cp one-shot no F0). Sem sync automatico depois — cada base evolui separado
 - Features novas do v1 pos-bootstrap NAO vem automaticamente pro v2
 
@@ -25,7 +25,7 @@ Codigo herdado do v1 por copia fisica no bootstrap. Estrutura identica; procure 
 **Caminho do repo:** `/root/hub2` (NAO `/opt/platform` — esse eh do v1)
 **Processo PM2:** `dros-hub-v2`
 **Node:** v16.x via nvm (`source ~/.nvm/nvm.sh && nvm use 16`)
-**Porta API:** 3005
+**Porta API:** 3007
 **Base path frontend:** `/hub2/`
 **URL:** https://drosagencia.com.br/hub2
 
