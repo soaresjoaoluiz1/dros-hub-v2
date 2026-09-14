@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { SSEProvider } from './context/SSEContext'
 import { ThemeProvider } from './context/ThemeContext'
 import Sidebar from './components/Sidebar'
+import PreviewBanner from './components/PreviewBanner'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Pipeline from './pages/Pipeline'
@@ -13,6 +14,7 @@ import Performance from './pages/Performance'
 import PerformanceOverview from './pages/PerformanceOverview'
 import Clients from './pages/Clients'
 import ClientDetail from './pages/ClientDetail'
+import VisaoGeral from './pages/VisaoGeral'
 import Team from './pages/Team'
 import Departments from './pages/Departments'
 import Categories from './pages/Categories'
@@ -41,6 +43,7 @@ function AppRoutes() {
   return (
     <SSEProvider>
       <TimerCheck />
+      <PreviewBanner />
       <div className="app-layout">
         <Sidebar />
         <main className="main-content">
@@ -59,6 +62,7 @@ function AppRoutes() {
             {(isDono || isGerente) && <>
               <Route path="/clients" element={<Clients />} />
               <Route path="/clients/:id" element={<ClientDetail />} />
+              <Route path="/visao-geral" element={<VisaoGeral />} />
               <Route path="/team" element={<Team />} />
               <Route path="/departments" element={<Departments />} />
               <Route path="/categories" element={<Categories />} />

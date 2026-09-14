@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchClients, createClient, updateClient, formatNumber, type Client } from '../lib/api'
-import { Building2, Plus, Edit3, Eye, Archive, ArchiveRestore } from 'lucide-react'
+import { Building2, Plus, Edit3, Eye, Archive, ArchiveRestore, LayoutGrid, Table2 } from 'lucide-react'
 import CoreAccountSelect from '../components/CoreAccountSelect'
 
 const BLANK_FORM = {
@@ -13,23 +13,141 @@ const BLANK_FORM = {
   core_client_name: '',
 }
 
+type ViewMode = 'grid' | 'table'
+
+function getClientInitials(name: string): string {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0].slice(0, 3).toUpperCase()
+  return (parts[0][0] + (parts[1]?.[0] || '') + (parts[2]?.[0] || '')).toUpperCase().slice(0, 3)
+}
+
+function ClientCard({ c, onView, onEdit, onToggleActive }: {
+  c: Client
+  onView: () => void
+  onEdit: () => void
+  onToggleActive: () => void
+}) {
+  const segmento = (c as any).segmento as string | undefined
+  const cidade = (c as any).cidade as string | undefined
+  const estado = (c as any).estado as string | undefined
+  const location = [cidade, estado].filter(Boolean).join(' / ')
+
+  return (
+    <div
+      style={{
+        background: 'var(--card-bg, #FFFFFF)',
+        border: '1px solid var(--border-subtle, #E5E7EB)',
+        borderRadius: 12,
+        padding: 16,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        transition: 'border-color 120ms, transform 120ms, box-shadow 120ms',
+        cursor: 'pointer',
+      }}
+      onClick={onView}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.borderColor = '#FFB300'
+        e.currentTarget.style.transform = 'translateY(-1px)'
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(255,179,0,0.08)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border-subtle, #E5E7EB)'
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = 'none'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div
+          aria-hidden
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 10,
+            background: c.logo_url ? `url(${c.logo_url}) center/cover` : 'linear-gradient(135deg, #7B61FF 0%, #B47CFF 100%)',
+            color: '#FFFFFF',
+            fontSize: 13,
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            letterSpacing: 0.5,
+          }}
+        >
+          {!c.logo_url && getClientInitials(c.name)}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</div>
+          {segmento && <div style={{ fontSize: 11, color: '#9B96B0', marginTop: 2 }}>{segmento}</div>}
+        </div>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            padding: '3px 8px',
+            borderRadius: 6,
+            letterSpacing: 0.4,
+            background: c.is_active ? 'rgba(52,199,89,0.12)' : 'rgba(255,107,107,0.12)',
+            color: c.is_active ? '#34C759' : '#FF6B6B',
+            textTransform: 'uppercase',
+          }}
+        >
+          {c.is_active ? 'Ativo' : 'Inativo'}
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, color: '#6B6580' }}>
+        {c.contact_name && <div>👤 {c.contact_name}</div>}
+        {c.contact_email && <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>✉ {c.contact_email}</div>}
+        {location && <div>📍 {location}</div>}
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid var(--border-subtle, #E5E7EB)' }}>
+        <div style={{ fontSize: 12, color: '#9B96B0' }}>
+          <span style={{ fontWeight: 700, color: '#4A4560' }}>{formatNumber(c.task_count || 0)}</span> tarefas
+        </div>
+        <div style={{ display: 'flex', gap: 4 }} onClick={(e) => e.stopPropagation()}>
+          <button className="btn btn-secondary btn-sm btn-icon" onClick={onView} title="Ver detalhes"><Eye size={12} /></button>
+          <button className="btn btn-secondary btn-sm btn-icon" onClick={onEdit} title="Editar"><Edit3 size={12} /></button>
+          <button
+            className="btn btn-secondary btn-sm btn-icon"
+            onClick={onToggleActive}
+            title={c.is_active ? 'Inativar cliente' : 'Reativar cliente'}
+            style={c.is_active ? { color: '#FF6B6B' } : { color: '#34C759' }}
+          >{c.is_active ? <Archive size={12} /> : <ArchiveRestore size={12} />}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const VIEW_MODE_KEY = 'hub2_clients_viewmode'
+
 export default function Clients() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'active' | 'inactive'>('active')
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    try { return (localStorage.getItem(VIEW_MODE_KEY) as ViewMode) || 'grid' } catch { return 'grid' }
+  })
   const navigate = useNavigate()
 
-  // Modal: 'new' = criar, number = editar id, null = fechado
   const [modalMode, setModalMode] = useState<'new' | number | null>(null)
   const [form, setForm] = useState(BLANK_FORM)
   const isEditing = typeof modalMode === 'number'
+
+  const setMode = (m: ViewMode) => {
+    setViewMode(m)
+    try { localStorage.setItem(VIEW_MODE_KEY, m) } catch {}
+  }
 
   const load = () => { setLoading(true); fetchClients({ inactive: view === 'inactive' }).then(setClients).finally(() => setLoading(false)) }
   useEffect(load, [view])
 
   const handleToggleActive = async (c: Client) => {
     if (c.is_active) {
-      // Desativar — pergunta mes de saida pra calcular ate quando aparece no financeiro
       const today = new Date()
       const defaultMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
       const month = prompt(
@@ -82,7 +200,6 @@ export default function Clients() {
     const payload: any = { ...form }
     payload.monthly_fee = form.monthly_fee ? parseFloat(form.monthly_fee) : 0
     payload.payment_day = form.payment_day ? parseInt(form.payment_day) : 10
-    // No PUT, nao envia senha vazia (mantem a atual)
     if (isEditing && !payload.password) delete payload.password
 
     try {
@@ -94,7 +211,46 @@ export default function Clients() {
 
   return (
     <div>
-      <div className="page-header"><h1><Building2 size={22} style={{ marginRight: 8 }} /> Clientes</h1><button className="btn btn-primary btn-sm" onClick={openNew}><Plus size={14} /> Novo Cliente</button></div>
+      <div className="page-header">
+        <h1><Building2 size={22} style={{ marginRight: 8 }} /> Clientes</h1>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', border: '1px solid var(--border-subtle, #E5E7EB)', borderRadius: 8, overflow: 'hidden' }}>
+            <button
+              onClick={() => setMode('grid')}
+              title="Grid de cards"
+              style={{
+                background: viewMode === 'grid' ? 'rgba(255,179,0,0.15)' : 'transparent',
+                border: 'none',
+                color: viewMode === 'grid' ? '#FFB300' : '#9B96B0',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <LayoutGrid size={14} />
+            </button>
+            <button
+              onClick={() => setMode('table')}
+              title="Tabela"
+              style={{
+                background: viewMode === 'table' ? 'rgba(255,179,0,0.15)' : 'transparent',
+                border: 'none',
+                color: viewMode === 'table' ? '#FFB300' : '#9B96B0',
+                padding: '6px 10px',
+                cursor: 'pointer',
+                borderLeft: '1px solid var(--border-subtle, #E5E7EB)',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <Table2 size={14} />
+            </button>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={openNew}><Plus size={14} /> Novo Cliente</button>
+        </div>
+      </div>
+
       <div style={{ display: 'flex', gap: 4, marginBottom: 12, borderBottom: '1px solid var(--border-subtle)' }}>
         <button
           onClick={() => setView('active')}
@@ -105,7 +261,30 @@ export default function Clients() {
           style={{ background: 'none', border: 'none', color: view === 'inactive' ? '#FFB300' : '#9B96B0', borderBottom: view === 'inactive' ? '2px solid #FFB300' : '2px solid transparent', padding: '8px 16px', cursor: 'pointer', fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}
         ><Archive size={12} /> Inativos</button>
       </div>
-      {loading ? <div className="loading-container"><div className="spinner" /></div> : (
+
+      {loading ? (
+        <div className="loading-container"><div className="spinner" /></div>
+      ) : clients.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 60, color: '#6B6580' }}>
+          {view === 'active' ? 'Nenhum cliente ativo' : 'Nenhum cliente inativo'}
+        </div>
+      ) : viewMode === 'grid' ? (
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+          gap: 16,
+        }}>
+          {clients.map(c => (
+            <ClientCard
+              key={c.id}
+              c={c}
+              onView={() => navigate(`/clients/${c.id}`)}
+              onEdit={() => openEdit(c)}
+              onToggleActive={() => handleToggleActive(c)}
+            />
+          ))}
+        </div>
+      ) : (
         <div className="table-card"><table>
           <thead><tr><th>Nome</th><th>Contato</th><th>Email</th><th className="right">Tarefas</th><th>Status</th><th className="right">Acoes</th></tr></thead>
           <tbody>
@@ -126,10 +305,10 @@ export default function Clients() {
                 </td>
               </tr>
             ))}
-            {clients.length === 0 && <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: '#6B6580' }}>{view === 'active' ? 'Nenhum cliente ativo' : 'Nenhum cliente inativo'}</td></tr>}
           </tbody>
         </table></div>
       )}
+
       {modalMode !== null && (
         <div className="modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) (closeModal)() }}><div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 700, maxHeight: '90vh', overflowY: 'auto' }}>
           <h2>{isEditing ? 'Editar Cliente' : 'Novo Cliente'}</h2>
